@@ -1,0 +1,8 @@
+apiversion: v1
+kind: Namespace
+metadata:
+  name: ${SERVICE_NAME}
+  labels: 
+      environment: ${ENVIRONMENT}
+      managed-by: terraform
+      platform: idp

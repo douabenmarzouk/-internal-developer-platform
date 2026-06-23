@@ -1,0 +1,30 @@
+# ============================================================
+# ingress.yaml
+# Projet     : Internal Developer Platform (IDP)
+# Auteur     : Doaa Ben Marzouk
+# École      : ENICarthage
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${SERVICE_NAME}-ingress
+  namespace: ${SERVICE_NAME}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  labels:
+    app: ${SERVICE_NAME}
+    managed-by: terraform
+    platform: idp
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: idp.local
+      http:
+        paths:
+          - path: /${SERVICE_NAME}
+            pathType: Prefix
+            backend:
+              service:
+                name: ${SERVICE_NAME}
+                port:
+                  number: ${PORT}
