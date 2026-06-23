@@ -85,7 +85,7 @@ variable "replicas" {
 variable "port" {
   description = "Port exposé par le microservice"
   type        = number
-  default     = 8080
+  default     = 8087
   validation {
     condition     = var.port >= 1024 && var.port <= 65535
     error_message = "Le port doit être entre 1024 et 65535."
