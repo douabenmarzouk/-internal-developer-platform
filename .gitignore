@@ -1,0 +1,28 @@
+# Terraform
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/.terraform.lock.hcl
+
+# Java / Spring Boot
+backend/target/
+backend/.mvn/
+*.class
+*.jar
+
+# Node / React
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# Docker
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

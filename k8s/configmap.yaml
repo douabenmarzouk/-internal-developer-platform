@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${SERVICE_NAME}-Config
+  namespace: ${SERVICE_NAME}
+  labels:
+      app: ${SERVICE_NAME}
+      managed_by: terraform
+      platform: idp
+
+data:
+      SERVICE_NAME: ${SERVICE_NAME}
+      ENVIRONMENT: ${ENVIRONMENT}
+      LANGUAGE: ${LANGUAGE}
+      SERVICE_TYPE: ${SERVICE_TYPE}
+      REPLICAS: ${REPLICAS}
+      PORT: "${PORT}"

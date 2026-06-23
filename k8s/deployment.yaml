@@ -1,0 +1,61 @@
+# ============================================================
+# deployment.yaml
+# Projet     : Internal Developer Platform (IDP)
+# Auteur     : Doaa Ben Marzouk
+# École      : ENICarthage
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${SERVICE_NAME}
+  namespace: ${SERVICE_NAME}
+  labels:
+    app: ${SERVICE_NAME}
+    environment: ${ENVIRONMENT}
+    language: ${LANGUAGE}
+    managed-by: terraform
+    platform: idp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${SERVICE_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${SERVICE_NAME}
+        environment: ${ENVIRONMENT}
+    spec:
+      serviceAccountName: ${SERVICE_NAME}-sa
+      containers:
+        - name: ${SERVICE_NAME}
+          image: ${DOCKER_IMAGE}
+          ports:
+            - containerPort: 8087
+          resources:
+            requests:
+              cpu: ${CPU_REQUEST}
+              memory: ${MEMORY_REQUEST}
+            limits:
+              cpu: ${CPU_LIMIT}
+              memory: ${MEMORY_LIMIT}
+          envFrom:
+            - configMapRef:
+                name: ${SERVICE_NAME}-config
+          env:
+            - name: SERVICE_NAME
+              value: ${SERVICE_NAME}
+            - name: ENVIRONMENT
+              value: ${ENVIRONMENT}
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: ${PORT}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: ${PORT}
+            initialDelaySeconds: 15
+            periodSeconds: 5
