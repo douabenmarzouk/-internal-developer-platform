@@ -1,0 +1,19 @@
+# ============================================================
+# playbook.yml
+# Projet      : Internal Developer Platform (IDP)
+# Auteur      : Doaa Ben Marzouk
+# Description : Point d'entrée principal — exécute le rôle
+#               prepare_env AVANT que Terraform intervienne
+# Lancement   : ansible-playbook playbook.yml -e "service_name=mon-service language=java"
+# ============================================================
+
+- name: Préparer l'environnement de déploiement IDP
+  hosts: localhost
+  connection: local
+
+  vars:
+    service_name: "{{ service_name | default('demo-service') }}"
+    language: "{{ language | default('java') }}"
+
+  roles:
+    - prepare_env

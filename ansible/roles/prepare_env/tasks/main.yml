@@ -1,0 +1,89 @@
+# ============================================================
+# tasks/main.yml
+# Projet      : Internal Developer Platform (IDP)
+# Auteur      : Doaa Ben Marzouk
+# Description : Tâches du rôle prepare_env
+#               Exécutées AVANT Terraform
+#               Ne touche JAMAIS aux ressources Kubernetes
+# ============================================================
+
+# ---- 1. Vérifications préalables --------------------------
+
+- name: Vérifier que Docker est installé
+  command: docker --version
+  register: docker_check
+  changed_when: false
+
+- name: Afficher la version de Docker
+  debug:
+    msg: "{{ docker_check.stdout }}"
+
+- name: Vérifier que Minikube est installé
+  command: minikube version
+  register: minikube_check
+  changed_when: false
+
+- name: Afficher la version de Minikube
+  debug:
+    msg: "{{ minikube_check.stdout }}"
+
+# ---- 2. Démarrer Minikube si nécessaire -------------------
+
+- name: Vérifier le statut de Minikube
+  command: minikube status
+  register: minikube_status
+  changed_when: false
+  ignore_errors: true
+
+- name: Démarrer Minikube si arrêté
+  command: minikube start --driver={{ minikube_driver }}
+  when: "'Running' not in minikube_status.stdout"
+
+- name: Confirmer que Minikube est prêt
+  debug:
+    msg: "✅ Minikube est démarré et prêt."
+
+# ---- 3. Builder l'image Docker du microservice ------------
+
+- name: Builder l'image Docker
+  community.docker.docker_image:
+    name: "{{ docker_image }}"
+    build:
+      path: "{{ docker_context_path }}"
+    source: build
+    force_source: true
+
+- name: Confirmer le build de l'image
+  debug:
+    msg: "✅ Image {{ docker_image }} buildée avec succès."
+
+# ---- 4. Charger l'image dans Minikube ---------------------
+
+- name: Charger l'image dans Minikube
+  command: minikube image load {{ docker_image }}
+  register: image_load
+  changed_when: true
+
+- name: Confirmer le chargement
+  debug:
+    msg: "✅ Image {{ docker_image }} chargée dans Minikube."
+
+# ---- 5. Vérifier le contexte kubectl ----------------------
+
+- name: Vérifier que kubectl pointe sur Minikube
+  command: kubectl config current-context
+  register: kube_context
+  changed_when: false
+
+- name: Afficher le contexte actif
+  debug:
+    msg: "Contexte kubectl : {{ kube_context.stdout }}"
+
+- name: Échouer si contexte incorrect
+  fail:
+    msg: "⚠️ kubectl ne pointe pas sur minikube ! Lance : kubectl config use-context minikube"
+  when: "'minikube' not in kube_context.stdout"
+
+- name: Tout est prêt pour Terraform
+  debug:
+    msg: "✅ Environnement prêt. Lance maintenant : terraform apply"

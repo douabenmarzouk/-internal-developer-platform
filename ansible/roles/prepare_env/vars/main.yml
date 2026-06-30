@@ -1,0 +1,15 @@
+# ============================================================
+# vars/main.yml
+# Projet      : Internal Developer Platform (IDP)
+# Description : Variables du rôle prepare_env
+#               (les "ingrédients" utilisés par les tâches)
+# ============================================================
+
+# Image Docker à builder et charger dans Minikube
+docker_image: "{{ service_name }}:latest"
+
+# Chemin vers le Dockerfile du microservice
+docker_context_path: "../../backend"
+
+# Driver Minikube (docker = pas besoin de VirtualBox)
+minikube_driver: "docker"

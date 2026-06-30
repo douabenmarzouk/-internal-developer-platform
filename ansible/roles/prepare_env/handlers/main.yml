@@ -1,0 +1,11 @@
+# ============================================================
+# handlers/main.yml
+# Projet      : Internal Developer Platform (IDP)
+# Description : Actions déclenchées SEULEMENT si un changement
+#               se produit dans les tâches
+#               (comme un "if" conditionnel automatique)
+# ============================================================
+
+- name: Restart Minikube
+  command: minikube stop && minikube start --driver=docker
+  listen: "restart minikube"

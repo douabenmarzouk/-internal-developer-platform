@@ -1,0 +1,10 @@
+# ============================================================
+# requirements.yml
+# Projet      : Internal Developer Platform (IDP)
+# Description : Collections Ansible à installer
+# Commande    : ansible-galaxy collection install -r requirements.yml
+# ============================================================
+
+collections:
+  - name: community.docker
+    version: ">=3.4.0"
