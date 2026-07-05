@@ -63,10 +63,8 @@ output "node_port" {
 }
 
 output "service_url" {
-  description = "URL d'accès au service"
-  value       = var.create_ingress ? "http://${var.ingress_host}/${var.service_name}" : "http://$(minikube ip):${kubernetes_service.app.spec[0].port[0].node_port}"
+  value = var.create_ingress ? "http://${var.ingress_host}/${var.service_name}" : "http://${var.vm_ip}:${kubernetes_service.app.spec[0].port[0].node_port}"
 }
-
 # ---- Commandes kubectl ------------------------------------
 
 output "kubectl_get_pods" {
@@ -92,13 +90,10 @@ output "kubectl_describe" {
 # ---- Monitoring -------------------------------------------
 
 output "prometheus_url" {
-  description = "URL Prometheus accessible depuis navigateur"
-  value       = "http://$(minikube ip):30090"
+  value = "http://${var.vm_ip}:30090"
 }
-
 output "grafana_url" {
-  description = "URL Grafana accessible depuis navigateur"
-  value       = "http://$(minikube ip):30300"
+  value = "http://${var.vm_ip}:30300"
 }
 
 output "grafana_credentials" {

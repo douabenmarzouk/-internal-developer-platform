@@ -16,6 +16,11 @@ variable "service_name" {
     error_message = "Le nom doit avoir plus de 2 caractères."
   }
 }
+variable "vm_ip" {
+  description = "IP de la VM VMware (K3s)"
+  type        = string
+  default     = "192.168.178.129"  # ← mettre ton IP VM
+}
 
 variable "docker_image" {
   description = "Image Docker du microservice"

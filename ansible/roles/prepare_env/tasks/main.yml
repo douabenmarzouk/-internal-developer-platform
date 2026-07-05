@@ -3,87 +3,107 @@
 # Projet      : Internal Developer Platform (IDP)
 # Auteur      : Doaa Ben Marzouk
 # Description : Tâches du rôle prepare_env
-#               Exécutées AVANT Terraform
-#               Ne touche JAMAIS aux ressources Kubernetes
+#               OS : Rocky Linux
 # ============================================================
 
-# ---- 1. Vérifications préalables --------------------------
+# ---- 1. Mettre à jour les paquets -------------------------
+- name: Mettre à jour tous les paquets
+  dnf:
+    name: "*"
+    state: latest
 
-- name: Vérifier que Docker est installé
-  command: docker --version
-  register: docker_check
-  changed_when: false
+# ---- 2. Installer Docker ----------------------------------
+- name: Installer yum-utils
+  dnf:
+    name: yum-utils
+    state: present            # idempotent ✅
 
-- name: Afficher la version de Docker
-  debug:
-    msg: "{{ docker_check.stdout }}"
+- name: Ajouter le repo Docker
+  shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  args:
+    creates: /etc/yum.repos.d/docker-ce.repo    # idempotent ✅
 
-- name: Vérifier que Minikube est installé
-  command: minikube version
-  register: minikube_check
-  changed_when: false
+- name: Installer Docker Engine
+  dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: present            # idempotent ✅
+  notify: restart docker
 
-- name: Afficher la version de Minikube
-  debug:
-    msg: "{{ minikube_check.stdout }}"
+- name: Démarrer et activer Docker
+  systemd:
+    name: docker
+    state: started
+    enabled: true             # idempotent ✅
 
-# ---- 2. Démarrer Minikube si nécessaire -------------------
+- name: Ajouter user au groupe docker
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true              # idempotent ✅
 
-- name: Vérifier le statut de Minikube
-  command: minikube status
-  register: minikube_status
-  changed_when: false
-  ignore_errors: true
+# ---- 3. Vérifier si K3s est déjà installé ----------------
+- name: Vérifier si K3s est installé
+  stat:
+    path: /usr/local/bin/k3s
+  register: k3s_binary
 
-- name: Démarrer Minikube si arrêté
-  command: minikube start --driver={{ minikube_driver }}
-  when: "'Running' not in minikube_status.stdout"
+# ---- 4. Installer K3s -------------------------------------
+- name: Installer K3s
+  shell: curl -sfL https://get.k3s.io | sh -
+  when: not k3s_binary.stat.exists    # idempotent ✅
+  notify: restart k3s
 
-- name: Confirmer que Minikube est prêt
-  debug:
-    msg: "✅ Minikube est démarré et prêt."
+# ---- 5. Démarrer K3s --------------------------------------
+- name: Démarrer et activer K3s
+  systemd:
+    name: k3s
+    state: started
+    enabled: true             # idempotent ✅
 
-# ---- 3. Builder l'image Docker du microservice ------------
+# ---- 6. Attendre que K3s soit prêt ------------------------
+- name: Attendre que K3s soit prêt
+  command: k3s kubectl get nodes
+  register: k3s_status
+  retries: 5
+  delay: 10
+  until: k3s_status.rc == 0
+  changed_when: false         # idempotent ✅
 
+# ---- 7. Récupérer le kubeconfig ---------------------------
+- name: Récupérer le kubeconfig K3s
+  fetch:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: ~/.kube/config
+    flat: true
+
+# ---- 8. Copier le code source sur la VM ------------------
+- name: Copier le code source sur la VM
+  copy:
+    src: "{{ docker_context_path }}"
+    dest: /tmp/{{ service_name }}
+
+# ---- 9. Builder l'image Docker ----------------------------
 - name: Builder l'image Docker
   community.docker.docker_image:
     name: "{{ docker_image }}"
     build:
-      path: "{{ docker_context_path }}"
+      path: /tmp/{{ service_name }}
     source: build
-    force_source: true
+    force_source: false       # idempotent ✅
 
-- name: Confirmer le build de l'image
+# ---- 10. Confirmer que tout est prêt ----------------------
+- name: Confirmer image buildée
   debug:
-    msg: "✅ Image {{ docker_image }} buildée avec succès."
+    msg: "✅ Image {{ docker_image }} prête dans K3s"
 
-# ---- 4. Charger l'image dans Minikube ---------------------
-
-- name: Charger l'image dans Minikube
-  command: minikube image load {{ docker_image }}
-  register: image_load
-  changed_when: true
-
-- name: Confirmer le chargement
-  debug:
-    msg: "✅ Image {{ docker_image }} chargée dans Minikube."
-
-# ---- 5. Vérifier le contexte kubectl ----------------------
-
-- name: Vérifier que kubectl pointe sur Minikube
+- name: Vérifier contexte kubectl
   command: kubectl config current-context
   register: kube_context
-  changed_when: false
-
-- name: Afficher le contexte actif
-  debug:
-    msg: "Contexte kubectl : {{ kube_context.stdout }}"
-
-- name: Échouer si contexte incorrect
-  fail:
-    msg: "⚠️ kubectl ne pointe pas sur minikube ! Lance : kubectl config use-context minikube"
-  when: "'minikube' not in kube_context.stdout"
+  changed_when: false         # idempotent ✅
 
 - name: Tout est prêt pour Terraform
   debug:
-    msg: "✅ Environnement prêt. Lance maintenant : terraform apply"
+    msg: "✅ K3s prêt — lance terraform apply"

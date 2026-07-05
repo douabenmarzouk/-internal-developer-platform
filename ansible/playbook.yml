@@ -7,9 +7,9 @@
 # Lancement   : ansible-playbook playbook.yml -e "service_name=mon-service language=java"
 # ============================================================
 
-- name: Préparer l'environnement de déploiement IDP
-  hosts: localhost
-  connection: local
+- name: Préparer l'environnement k3s
+  hosts: K3s-vm
+  become: true
 
   vars:
     service_name: "{{ service_name | default('demo-service') }}"

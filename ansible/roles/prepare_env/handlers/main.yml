@@ -6,6 +6,8 @@
 #               (comme un "if" conditionnel automatique)
 # ============================================================
 
-- name: Restart Minikube
-  command: minikube stop && minikube start --driver=docker
-  listen: "restart minikube"
+- name: Restart K3S
+  systemd: 
+     name: k3s
+     state: restart
+  listen: "restart k3s"
