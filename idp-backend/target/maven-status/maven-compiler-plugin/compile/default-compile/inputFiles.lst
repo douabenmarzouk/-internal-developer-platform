@@ -1,0 +1,12 @@
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\config\CorsConfig.java
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\controller\DeployementController.java
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\controller\ServiceInfoController.java
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\DemoApplication.java
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\dto\DeploymentRequest.java
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\dto\DeploymentResponse.java
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\model\Deployment.java
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\model\DeploymentState.java
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\repository\DeploymentRepository.java
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\service\AnsibleService.java
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\service\DeployementService.java
+C:\Users\Doua\Downloads\idp-backend\idp-backend\src\main\java\com\internaldeveloperplatform\demo\service\TerrafromService.java
