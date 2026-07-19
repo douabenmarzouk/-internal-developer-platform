@@ -16,7 +16,7 @@ public class DeploymentResponse {
 
     private Long id;
     private String message;
-    private DeploymentState status;
+    private DeploymentState state;
     private String serviceName;
     private LocalDateTime creationDate;
 }

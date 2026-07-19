@@ -24,7 +24,7 @@ public class DeployementController {
 
         DeploymentResponse response = deploymentService.deploy(request);
 
-        if (response.getStatus().name().equals("FAILED")) {
+        if (response.getState().name().equals("FAILED")) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(response);
@@ -44,7 +44,7 @@ public class DeployementController {
         DeploymentResponse response = deploymentService
                 .deleteDeployment(serviceName);
 
-        if (response.getStatus().name().equals("FAILED")) {
+        if (response.getState().name().equals("FAILED")) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(response);

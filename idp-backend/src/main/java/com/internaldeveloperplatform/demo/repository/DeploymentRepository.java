@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface DeploymentRepository extends JpaRepository<Deployment, Long> {
 
     // Chercher par statut
-    List<Deployment> findByStatus(DeploymentState status);
+    List<Deployment> findByState(DeploymentState state);
 
     // Chercher par namespace
     List<Deployment> findByNamespace(String namespace);
@@ -29,7 +29,7 @@ public interface DeploymentRepository extends JpaRepository<Deployment, Long> {
     boolean existsByServiceName(String serviceName);
 
     // Chercher par statut trié par date décroissante
-    List<Deployment> findByStatusOrderByCreatedAtDesc(DeploymentState status);
+    List<Deployment> findByStateOrderByCreatedAtDesc(DeploymentState state);
 
     // Recherche par mot clé dans le nom
     @Query("SELECT d FROM Deployment d WHERE d.serviceName LIKE %:keyword%")

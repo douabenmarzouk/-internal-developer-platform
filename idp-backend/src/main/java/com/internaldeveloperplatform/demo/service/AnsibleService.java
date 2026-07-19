@@ -16,7 +16,7 @@ public class AnsibleService {
             // Lance : ansible-playbook playbook.yml
             //         -e "service_name=xxx language=xxx"
             ProcessBuilder pb = new ProcessBuilder(
-                    "ansible-playbook",
+                    "wsl","ansible-playbook",
                     ansiblePlaybookPath,
                     "-e", "service_name=" + serviceName,
                     "-e", "language=" + language

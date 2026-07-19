@@ -27,7 +27,7 @@ public class DeployementService {
         if (deploymentRepository.existsByServiceName(request.getServiceName())) {
             return DeploymentResponse.builder()
                     .message("❌ Service " + request.getServiceName() + " existe déjà !")
-                    .status(DeploymentState.FAILED)
+                    .state(DeploymentState.FAILED)
                     .serviceName(request.getServiceName())
                     .build();
         }
@@ -56,7 +56,7 @@ public class DeployementService {
             return DeploymentResponse.builder()
                     .id(deployment.getId())
                     .message("❌ Ansible a échoué !")
-                    .status(DeploymentState.FAILED)
+                    .state(DeploymentState.FAILED)
                     .serviceName(request.getServiceName())
                     .build();
         }
@@ -76,7 +76,7 @@ public class DeployementService {
             return DeploymentResponse.builder()
                     .id(deployment.getId())
                     .message("❌ Terraform a échoué !")
-                    .status(DeploymentState.FAILED)
+                    .state(DeploymentState.FAILED)
                     .serviceName(request.getServiceName())
                     .build();
         }
@@ -88,7 +88,7 @@ public class DeployementService {
         return DeploymentResponse.builder()
                 .id(deployment.getId())
                 .message("✅ Microservice déployé avec succès !")
-                .status(DeploymentState.SUCCESS)
+                .state(DeploymentState.SUCCESS)
                 .serviceName(request.getServiceName())
                 .creationDate(deployment.getCreatedAt())
                 .build();
@@ -103,9 +103,9 @@ public class DeployementService {
         return deploymentRepository.findById(id);
     }
     // Ajoute dans DeploymentService.java
-    public List<Deployment> getDeploymentsByStatus(String status) {
-        return deploymentRepository.findByStatus(
-                DeploymentState.valueOf(status.toUpperCase())
+    public List<Deployment> getDeploymentsByStatus(String state) {
+        return deploymentRepository.findByState(
+                DeploymentState.valueOf(state.toUpperCase())
         );
     }
     // Supprimer un déploiement
@@ -118,14 +118,14 @@ public class DeployementService {
                     .ifPresent(deploymentRepository::delete);
             return DeploymentResponse.builder()
                     .message("✅ Service " + serviceName + " supprimé !")
-                    .status(DeploymentState.SUCCESS)
+                    .state(DeploymentState.SUCCESS)
                     .serviceName(serviceName)
                     .build();
         }
 
         return DeploymentResponse.builder()
                 .message("❌ Suppression échouée !")
-                .status(DeploymentState.FAILED)
+                .state(DeploymentState.FAILED)
                 .serviceName(serviceName)
                 .build();
     }

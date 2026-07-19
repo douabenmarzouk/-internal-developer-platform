@@ -9,11 +9,11 @@ public class TerrafromService {
     @Value("${terraform.path}")
     private String terraformPath;
     public boolean init(){
-        return runCommand("terraform","init");
+        return runCommand("wsl","terraform","init");
     }
     public boolean apply(String serviceName, String language, Integer replicas) {
         return runCommand(
-                "terraform", "apply",
+               "wsl", "terraform", "apply",
                 "-auto-approve",
                 "-var", "service_name=" + serviceName,
                 "-var", "language=" + language,
@@ -22,7 +22,7 @@ public class TerrafromService {
     }
     public  boolean destroy (String serviceName){
         return runCommand(
-                "terraform","destroy",
+              "wsl",  "terraform","destroy",
                 "-auto-approve",
                 "-var","service_name=" +serviceName
         );
