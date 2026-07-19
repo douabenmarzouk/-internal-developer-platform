@@ -1,97 +1,107 @@
 // ============================================================
-// ServiceList.jsx
-// Description: Liste des microservices déployés
+// ServiceList.jsx — Liste des microservices déployés
 // ============================================================
 
-import { useEffect, useState } from "react";
-import { getDeployments, deleteDeployment } from "../services/api";
-import StatusBadge from "./StatusBadge";
+import { deleteDeployment } from '../services/api'
 
-const ServiceList = ({ refresh }) => {
-  const [deployments, setDeployments] = useState([]);
-  const [loading,     setLoading]     = useState(true);
+const LANG_CONFIG = {
+  java: { cls: 'thumb-java', icon: 'ti-coffee', tag: 'tag-java', label: 'Java' },
+  nodejs: { cls: 'thumb-node', icon: 'ti-brand-nodejs', tag: 'tag-node', label: 'Node.js' },
+  python: { cls: 'thumb-python', icon: 'ti-brand-python', tag: 'tag-python', label: 'Python' },
+  go: { cls: 'thumb-go', icon: 'ti-brand-golang', tag: 'tag-go', label: 'Go' },
+}
 
-  const fetchDeployments = async () => {
-    setLoading(true);
+const STATUS_DOT = {
+  SUCCESS: 'dot-success',
+  RUNNING: 'dot-success',
+  PENDING: 'dot-warning',
+  FAILED: 'dot-danger',
+}
+
+const ReplicasBar = ({ replicas, max = 5 }) => (
+  <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexShrink: 0 }}>
+    {Array.from({ length: max }).map((_, i) => (
+      <div
+        key={i}
+        style={{
+          width: '16px',
+          height: '4px',
+          borderRadius: '2px',
+          background: i < replicas ? 'var(--success)' : 'var(--border2)',
+        }}
+      />
+    ))}
+  </div>
+)
+
+const ServiceRow = ({ deployment, rank, onDelete }) => {
+  const lang = LANG_CONFIG[deployment.language?.toLowerCase()] || LANG_CONFIG.java
+  const dotClass = STATUS_DOT[deployment.state] || 'dot-muted'
+
+  const handleDelete = async () => {
+    if (!confirm(`Supprimer ${deployment.serviceName} ?`)) return
     try {
-      const res = await getDeployments();
-      setDeployments(res.data);
-    } catch {
-      console.error("Erreur chargement déploiements");
-    } finally {
-      setLoading(false);
+      await onDelete(deployment.serviceName)
+    } catch (err) {
+      alert('Erreur lors de la suppression')
     }
-  };
-
-  useEffect(() => {
-    fetchDeployments();
-  }, [refresh]);
-
-  const handleDelete = async (id) => {
-    if (!confirm("Supprimer ce déploiement ?")) return;
-    await deleteDeployment(id);
-    fetchDeployments();
-  };
-
-  if (loading) return <p>⏳ Chargement...</p>;
-
-  if (deployments.length === 0) return (
-    <div style={{
-      background: "white",
-      padding: "32px",
-      borderRadius: "16px",
-      textAlign: "center",
-      color: "#94a3b8",
-    }}>
-      Aucun microservice déployé
-    </div>
-  );
+  }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      {deployments.map((d) => (
-        <div key={d.id} style={{
-          background: "white",
-          padding: "24px",
-          borderRadius: "16px",
-          boxShadow: "0 4px 6px rgba(0,0,0,0.07)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}>
-          <div>
-            <h3 style={{ margin: 0, color: "#1e293b" }}>
-              {d.serviceName}
-            </h3>
-            <p style={{ margin: "4px 0", color: "#64748b", fontSize: "14px" }}>
-              {d.dockerImage} • {d.language} • {d.environment}
-            </p>
-            <p style={{ margin: "4px 0", color: "#64748b", fontSize: "14px" }}>
-              {d.replicas} réplica(s) • port {d.port}
-            </p>
-          </div>
+    <div className="service-row">
+      <div className="service-rank">{rank}</div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <StatusBadge status={d.status} />
-            <button
-              onClick={() => handleDelete(d.id)}
-              style={{
-                background: "#fee2e2",
-                color: "#dc2626",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontWeight: "bold",
-              }}
-            >
-              🗑️ Supprimer
-            </button>
-          </div>
+      <div className={`service-thumb ${lang.cls}`}>
+        <i className={`ti ${lang.icon}`} />
+      </div>
+
+      <div className="service-info">
+        <div className="service-name">{deployment.serviceName}</div>
+        <div className="service-detail">
+          {deployment.dockerImage} · namespace: {deployment.namespace}
         </div>
+      </div>
+
+      <div className="service-tags">
+        <span className={`tag ${lang.tag}`}>{lang.label}</span>
+      </div>
+
+      <ReplicasBar replicas={deployment.replicas || 0} />
+
+      <div style={{ fontSize: '11px', color: 'var(--text3)', minWidth: '60px', textAlign: 'center' }}>
+        {deployment.replicas} / 5 pods
+      </div>
+
+      <div className={`status-dot ${dotClass}`} />
+
+      <div className="service-actions">
+        <button className="icon-btn" title="Logs">
+          <i className="ti ti-terminal" />
+        </button>
+        <button className="icon-btn" title="Supprimer" onClick={handleDelete}>
+          <i className="ti ti-trash" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const ServiceList = ({ deployments, onDelete }) => {
+  if (!deployments.length) {
+    return (
+      <div style={{ textAlign: 'center', color: 'var(--text3)', padding: '40px', background: 'var(--bg2)', borderRadius: '6px' }}>
+        Aucun microservice déployé
+      </div>
+    )
+  }
+
+  return (
+    <div className="services-grid">
+      {deployments.map((d, i) => (
+        <ServiceRow key={d.id} deployment={d} rank={i + 1} onDelete={onDelete} />
       ))}
     </div>
-  );
-};
+  )
+}
 
-export default ServiceList;
+export default ServiceList

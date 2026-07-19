@@ -1,80 +1,80 @@
 // ============================================================
-// App.jsx
-// Description: Application principale IDP
+// App.jsx — Page principale du dashboard IDP
 // ============================================================
 
-import { useState } from "react";
-import DeployForm   from "./components/DeployForm";
-import ServiceList  from "./components/ServiceList";
+import { useState, useEffect } from 'react'
+import Topbar from './components/Topbar'
+import Hero from './components/Hero'
+import StatsRow from './components/StatsRow'
+import ServiceList from './components/ServiceList'
+import BottomPanels from './components/BottomPanels'
+import DeployModal from './components/DeployModal'
+import { getDeployments, deleteDeployment } from './services/api'
+import './styles/global.css'
+import './styles/dashboard.css'
 
 const App = () => {
-  const [refresh, setRefresh] = useState(0);
-  const [activeTab, setActiveTab] = useState("deploy");
+  const [deployments, setDeployments] = useState([])
+  const [modalOpen, setModalOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
 
-  const handleDeployed = () => {
-    setRefresh((r) => r + 1);
-    setActiveTab("services");
-  };
+  const fetchDeployments = async () => {
+    try {
+      const res = await getDeployments()
+      setDeployments(res.data)
+    } catch (err) {
+      console.error('Erreur chargement déploiements', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const tabStyle = (tab) => ({
-    padding: "10px 24px",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "bold",
-    fontSize: "14px",
-    background: activeTab === tab ? "#6366f1" : "white",
-    color:      activeTab === tab ? "white"   : "#64748b",
-  });
+  useEffect(() => {
+    fetchDeployments()
+  }, [])
+
+  const handleDelete = async (serviceName) => {
+    await deleteDeployment(serviceName)
+    fetchDeployments()
+  }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#f1f5f9",
-      fontFamily: "Inter, sans-serif",
-    }}>
+    <div className="app">
+      <Topbar onDeploy={() => setModalOpen(true)} />
 
-      {/* Header */}
-      <div style={{
-        background: "white",
-        padding: "16px 32px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}>
-        <div>
-          <h1 style={{ margin: 0, color: "#1e293b", fontSize: "22px" }}>
-            🚀 Internal Developer Platform
-          </h1>
-          <p style={{ margin: 0, color: "#64748b", fontSize: "13px" }}>
-            ENICarthage — Doaa Ben Marzouk
-          </p>
+      <Hero onDeploy={() => setModalOpen(true)} />
+
+      <StatsRow deployments={deployments} />
+
+      <div style={{ padding: '24px 32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '3px', height: '16px', background: 'var(--accent)', borderRadius: '2px' }} />
+            Active services
+          </div>
+          <span style={{ fontSize: '12px', color: 'var(--accent)', cursor: 'pointer' }}>
+            See all
+          </span>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button style={tabStyle("deploy")}   onClick={() => setActiveTab("deploy")}>
-            🚀 Déployer
-          </button>
-          <button style={tabStyle("services")} onClick={() => setActiveTab("services")}>
-            📋 Services
-          </button>
-        </div>
+        {loading ? (
+          <div style={{ textAlign: 'center', color: 'var(--text3)', padding: '40px' }}>
+            ⏳ Loading...
+          </div>
+        ) : (
+          <ServiceList deployments={deployments} onDelete={handleDelete} />
+        )}
+
+        <BottomPanels deployments={deployments} />
       </div>
 
-      {/* Contenu */}
-      <div style={{ maxWidth: "900px", margin: "32px auto", padding: "0 16px" }}>
-        {activeTab === "deploy" && (
-          <DeployForm onDeployed={handleDeployed} />
-        )}
-        {activeTab === "services" && (
-          <ServiceList refresh={refresh} />
-        )}
-      </div>
-
+      <DeployModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onDeployed={fetchDeployments}
+      />
     </div>
-  );
-};
+  )
+}
 
-export default App;
+export default App

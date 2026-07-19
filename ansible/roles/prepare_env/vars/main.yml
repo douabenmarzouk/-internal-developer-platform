@@ -1,12 +1,25 @@
 # ============================================================
 # vars/main.yml
 # Projet      : Internal Developer Platform (IDP)
+# Auteur      : Doaa Ben Marzouk
 # Description : Variables du rôle prepare_env
-#               (les "ingrédients" utilisés par les tâches)
 # ============================================================
 
+# ---- Image Docker -----------------------------------------
 docker_image: "{{ service_name }}:latest"
-docker_context_path: "/tmp/{{ service_name }}"
-k3s_binary: /usr/local/bin/k3s
-kubeconfig_path: /etc/rancher/k3s/k3s.yaml
-minikube_driver: docker
+
+# ---- GitHub -----------------------------------------------
+# Le code source est cloné depuis GitHub
+# (pas copié depuis Windows)
+github_repo: "https://github.com/douabenmarzouk/{{ service_name }}"
+github_branch: "main"
+code_dest: "/tmp/{{ service_name }}"
+
+# ---- Buildpacks -------------------------------------------
+pack_version: "v0.32.1"
+pack_builder: "paketobuildpacks/builder:base"
+pack_binary_path: "/usr/local/bin/pack"
+
+# ---- K3s --------------------------------------------------
+k3s_binary: "/usr/local/bin/k3s"
+kubeconfig_path: "/etc/rancher/k3s/k3s.yaml"

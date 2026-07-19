@@ -1,29 +1,25 @@
 // ============================================================
-// api.js
-// Projet     : Internal Developer Platform (IDP)
-// Auteur     : Doaa Ben Marzouk
-// École      : ENICarthage
-// Description: Appels API vers Spring Boot
+// api.js — Appels API vers Spring Boot (port 8085)
 // ============================================================
 
-import axios from "axios";
+import axios from 'axios'
 
 const API = axios.create({
-  baseURL: "http://localhost:8080/api",
-});
+  baseURL: '/api',
+})
 
-// ---- Déployer un microservice
+// Déployer un microservice
 export const deployService = (data) =>
-  API.post("/deployments", data);
+  API.post('/deploy', data)
 
-// ---- Récupérer tous les déploiements
+// Lister tous les déploiements
 export const getDeployments = () =>
-  API.get("/deployments");
+  API.get('/services')
 
-// ---- Récupérer un déploiement par id
+// Récupérer un déploiement par id
 export const getDeploymentById = (id) =>
-  API.get(`/deployments/${id}`);
+  API.get(`/services/${id}`)
 
-// ---- Supprimer un déploiement
-export const deleteDeployment = (id) =>
-  API.delete(`/deployments/${id}`);
+// Supprimer un déploiement
+export const deleteDeployment = (serviceName) =>
+  API.delete(`/deploy/${serviceName}`)

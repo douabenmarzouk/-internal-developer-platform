@@ -1,24 +1,14 @@
-# ============================================================
-# docker-compose.yml
-# Projet     : Internal Developer Platform (IDP)
-# Auteur     : Doaa Ben Marzouk
-# École      : ENICarthage
-# Description: Lance tous les services en 1 commande
-# ============================================================
-
 version: "3.9"
 
 services:
 
-  # ---- PostgreSQL ----------------------------------------
   postgres:
     image: postgres:16-alpine
     container_name: idp-db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-idp_db}
-      POSTGRES_USER: ${POSTGRES_USER:-idp_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-idp_pass}
-      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
@@ -26,53 +16,26 @@ services:
     networks:
       - idp-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-idp_user}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ---- Backend Spring Boot --------------------------------
-  backend:
-    build: ./backend
-    container_name: idp-backend
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/idp_db
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-idp_user}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-idp_pass}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: "true"
-    volumes:
-      - ./terraform:/terraform
-      - ./k8s:/k8s
-      - ~/.kube:/root/.kube
-      - ~/.minikube:/root/.minikube
-    networks:
-      - idp-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  # ---- Frontend React -------------------------------------
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: idp-frontend
     ports:
-      - "3000:3000"
-    environment:
-      VITE_API_URL: http://localhost:8080/api
+      - "3000:80"
     networks:
       - idp-network
-    depends_on:
-      - backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # ✅ accès Windows
 
-# ---- Volumes ---------------------------------------------
 volumes:
   postgres_data:
 
-# ---- Réseaux ---------------------------------------------
 networks:
   idp-network:
     driver: bridge
-

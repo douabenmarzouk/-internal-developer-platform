@@ -2,18 +2,24 @@
 # playbook.yml
 # Projet      : Internal Developer Platform (IDP)
 # Auteur      : Doaa Ben Marzouk
-# Description : Point d'entrée principal — exécute le rôle
-#               prepare_env AVANT que Terraform intervienne
-# Lancement   : ansible-playbook playbook.yml -e "service_name=mon-service language=java"
+# École       : ENICarthage
+# Description : Point d'entrée Ansible
+#               Exécuté AVANT Terraform
+#
+# Lancement :
+#   ansible-playbook playbook.yml \
+#     -e "service_name=user-service" \
+#     -e "github_repo=https://github.com/douabenmarzouk/user-service"
 # ============================================================
 
-- name: Préparer l'environnement k3s
-  hosts: K3s-vm
+- name: Préparer l'environnement de déploiement IDP
+  hosts: k3s-vm
   become: true
 
   vars:
     service_name: "{{ service_name | default('demo-service') }}"
-    language: "{{ language | default('java') }}"
+    github_repo: "{{ github_repo | default('https://github.com/douabenmarzouk/demo-service') }}"
+    github_branch: "{{ github_branch | default('main') }}"
 
   roles:
     - prepare_env

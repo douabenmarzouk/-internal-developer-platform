@@ -1,13 +1,18 @@
 # ============================================================
 # handlers/main.yml
 # Projet      : Internal Developer Platform (IDP)
-# Description : Actions déclenchées SEULEMENT si un changement
-#               se produit dans les tâches
-#               (comme un "if" conditionnel automatique)
+# Auteur      : Doaa Ben Marzouk
+# Description : Handlers — déclenchés seulement si changement
 # ============================================================
 
-- name: Restart K3S
-  systemd: 
-     name: k3s
-     state: restart
+- name: restart docker
+  systemd:
+    name: docker
+    state: restarted
+  listen: "restart docker"
+
+- name: restart k3s
+  systemd:
+    name: k3s
+    state: restarted
   listen: "restart k3s"

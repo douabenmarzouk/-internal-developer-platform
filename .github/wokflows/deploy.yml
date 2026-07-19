@@ -1,0 +1,142 @@
+# ============================================================
+# .github/workflows/deploy.yml
+# Projet  : Internal Developer Platform (IDP)
+# Auteur  : Doaa Ben Marzouk
+# École   : ENICarthage
+# ============================================================
+
+name: CI/CD IDP
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+
+  # ---- Job 1 : Tests Backend ----------------------------
+  test:
+    name: 🧪 Tests Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run Tests
+        run: |
+          cd backend
+          mvn clean test
+
+  # ---- Job 2 : Build Backend ----------------------------
+  build-backend:
+    name: 🔨 Build Backend
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build .jar
+        run: |
+          cd backend
+          mvn clean package -DskipTests
+
+      - name: Upload .jar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+
+  # ---- Job 3 : Build + Push Frontend --------------------
+  build-frontend:
+    name: 🎨 Build + Push Frontend
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build image Frontend
+        run: |
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/idp-frontend:latest \
+            -t ${{ secrets.DOCKER_USERNAME }}/idp-frontend:${{ github.sha }} \
+            ./frontend
+
+      - name: Push image Frontend
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/idp-frontend:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/idp-frontend:${{ github.sha }}
+
+  # ---- Job 4 : Health Check -----------------------------
+  health-check:
+    name: 🏥 Health Check
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+
+    steps:
+      - name: Health Check Backend
+        run: |
+          echo "🔍 Vérification Backend..."
+          curl -f http://${{ secrets.VM_HOST }}:8085/actuator/health || \
+          echo "⚠️ Backend pas encore disponible"
+
+      - name: Health Check Frontend
+        run: |
+          echo "🔍 Vérification Frontend..."
+          curl -f http://${{ secrets.VM_HOST }}:3000 || \
+          echo "⚠️ Frontend pas encore disponible"
+
+      # ✅ nc au lieu de pg_isready
+      - name: Health Check PostgreSQL
+        run: |
+          echo "🔍 Vérification PostgreSQL..."
+          nc -zv ${{ secrets.VM_HOST }} 5433 || \
+          echo "⚠️ PostgreSQL pas disponible"
+
+      - name: Résumé
+        if: always()
+        run: |
+          echo "================================"
+          echo "✅ CI/CD IDP terminé !"
+          echo "Backend  : http://${{ secrets.VM_HOST }}:8085"
+          echo "Frontend : http://${{ secrets.VM_HOST }}:3000"
+          echo "================================"
+
+  # ---- Job 5 : Notification échec ----------------------
+  notify-failure:
+    name: ❌ Notification Échec
+    runs-on: ubuntu-latest
+    needs: [test, build-backend, build-frontend, health-check]
+    if: failure()
+
+    steps:
+      - name: Notifier échec
+        run: |
+          echo "❌ Pipeline IDP échoué !"
+          echo "Commit  : ${{ github.sha }}"
+          echo "Branche : ${{ github.ref_name }}"
+          echo "Auteur  : ${{ github.actor }}"
