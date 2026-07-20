@@ -101,7 +101,7 @@ jobs:
       - name: Health Check Backend
         run: |
           echo "🔍 Vérification Backend..."
-          curl -f http://${{ secrets.VM_HOST }}:8085/actuator/health || \
+          curl -f http://${{ secrets.VM_HOST }}:8080/actuator/health || \
           echo "⚠️ Backend pas encore disponible"
 
       - name: Health Check Frontend
@@ -110,7 +110,6 @@ jobs:
           curl -f http://${{ secrets.VM_HOST }}:3000 || \
           echo "⚠️ Frontend pas encore disponible"
 
-      # ✅ nc au lieu de pg_isready
       - name: Health Check PostgreSQL
         run: |
           echo "🔍 Vérification PostgreSQL..."
@@ -122,7 +121,7 @@ jobs:
         run: |
           echo "================================"
           echo "✅ CI/CD IDP terminé !"
-          echo "Backend  : http://${{ secrets.VM_HOST }}:8085"
+          echo "Backend  : http://${{ secrets.VM_HOST }}:8080"
           echo "Frontend : http://${{ secrets.VM_HOST }}:3000"
           echo "================================"
 

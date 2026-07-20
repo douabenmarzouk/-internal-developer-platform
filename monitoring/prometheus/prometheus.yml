@@ -1,0 +1,46 @@
+# ============================================================
+# prometheus.yml
+# Projet      : Internal Developer Platform (IDP)
+# Auteur      : Doaa Ben Marzouk
+# Description : Configuration Prometheus
+#               Collecte métriques toutes les 15s depuis :
+#               - Spring Boot backend (IDP)
+#               - K3s cluster
+# ============================================================
+
+global:
+  scrape_interval: 15s      # collecte toutes les 15 secondes
+  evaluation_interval: 15s  # évalue les règles toutes les 15s
+
+# ---- Règles d'alertes ------------------------------------
+rule_files:
+  - "alert_rules.yml"
+
+# ---- Cibles à surveiller ---------------------------------
+scrape_configs:
+
+  # ---- Prometheus lui-même -------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ---- Spring Boot Backend (IDP) -------------------------
+  - job_name: 'idp-backend'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8085']
+    # ↑ host.docker.internal = Windows depuis Docker
+
+  # ---- K3s cluster ---------------------------------------
+  - job_name: 'k3s-nodes'
+    static_configs:
+      - targets: ['192.168.x.x:10250']
+    # ↑ remplace par l'IP de ta VM Rocky Linux
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+
+  # ---- PostgreSQL ----------------------------------------
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']

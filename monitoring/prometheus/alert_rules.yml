@@ -1,0 +1,50 @@
+# ============================================================
+# alert_rules.yml
+# Projet      : Internal Developer Platform (IDP)
+# Auteur      : Doaa Ben Marzouk
+# Description : Règles d'alertes Prometheus
+# ============================================================
+
+groups:
+  - name: idp-alerts
+    rules:
+
+      # ---- Backend down ----------------------------------
+      - alert: BackendDown
+        expr: up{job="idp-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "❌ Backend IDP est down"
+          description: "Le backend Spring Boot ne répond plus depuis 1 minute"
+
+      # ---- CPU élevé -------------------------------------
+      - alert: HighCPU
+        expr: process_cpu_usage > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ CPU élevé sur le backend"
+          description: "CPU > 80% depuis 5 minutes"
+
+      # ---- Mémoire élevée --------------------------------
+      - alert: HighMemory
+        expr: jvm_memory_used_bytes / jvm_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ Mémoire élevée sur le backend"
+          description: "Mémoire JVM > 80% depuis 5 minutes"
+
+      # ---- K3s node down ---------------------------------
+      - alert: K3sNodeDown
+        expr: up{job="k3s-nodes"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "❌ Node K3s est down"
+          description: "Un node K3s ne répond plus depuis 2 minutes"

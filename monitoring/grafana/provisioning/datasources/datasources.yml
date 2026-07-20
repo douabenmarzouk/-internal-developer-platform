@@ -1,0 +1,18 @@
+# ============================================================
+# datasources.yml
+# Projet      : Internal Developer Platform (IDP)
+# Auteur      : Doaa Ben Marzouk
+# Description : Configure automatiquement Prometheus
+#               comme datasource dans Grafana
+#               (pas besoin de configurer manuellement !)
+# ============================================================
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090    # nom service docker-compose
+    isDefault: true
+    editable: true
