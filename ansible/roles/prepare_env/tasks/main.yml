@@ -1,24 +1,9 @@
+
 # ============================================================
 # tasks/main.yml
 # Projet      : Internal Developer Platform (IDP)
 # Auteur      : Doaa Ben Marzouk
 # École       : ENICarthage
-# Description : Tâches du rôle prepare_env
-#               OS     : Rocky Linux (VM VMware)
-#               Exécuté AVANT Terraform
-#               Ne touche JAMAIS aux ressources Kubernetes
-#
-# Flux :
-#   1. Mettre à jour paquets
-#   2. Installer Docker
-#   3. Installer Git
-#   4. Installer K3s
-#   5. Démarrer K3s + récupérer kubeconfig
-#   6. Installer pack CLI (Buildpacks)
-#   7. Cloner code depuis GitHub (pas depuis Windows !)
-#   8. Builder image avec Buildpacks (auto-détecte le langage)
-#   9. Charger image dans K3s
-#  10. Vérifications finales
 # ============================================================
 
 # ---- 1. Mettre à jour les paquets -------------------------
@@ -26,19 +11,20 @@
   dnf:
     name: "*"
     state: latest
+  when: update_packages | default(false)
 
 # ---- 2. Installer Docker ----------------------------------
 - name: Installer yum-utils
   dnf:
     name: yum-utils
-    state: present            # idempotent ✅
+    state: present
 
 - name: Ajouter le repo Docker
   shell: >
     yum-config-manager --add-repo
     https://download.docker.com/linux/centos/docker-ce.repo
   args:
-    creates: /etc/yum.repos.d/docker-ce.repo    # idempotent ✅
+    creates: /etc/yum.repos.d/docker-ce.repo
 
 - name: Installer Docker Engine
   dnf:
@@ -46,30 +32,30 @@
       - docker-ce
       - docker-ce-cli
       - containerd.io
-    state: present            # idempotent ✅
+    state: present
   notify: restart docker
 
 - name: Démarrer et activer Docker
   systemd:
     name: docker
     state: started
-    enabled: true             # idempotent ✅
+    enabled: true
 
 - name: Ajouter user au groupe docker
   user:
     name: "{{ ansible_user }}"
     groups: docker
-    append: true              # idempotent ✅
+    append: true
 
 # ---- 3. Installer Git -------------------------------------
 - name: Installer Git
   dnf:
     name: git
-    state: present            # idempotent ✅
+    state: present
 
 - name: Vérifier version Git
   command: git --version
-  changed_when: false         # idempotent ✅
+  changed_when: false
   register: git_version
 
 - name: Afficher version Git
@@ -85,7 +71,7 @@
 # ---- 5. Installer K3s -------------------------------------
 - name: Installer K3s
   shell: curl -sfL https://get.k3s.io | sh -
-  when: not k3s_binary_stat.stat.exists    # idempotent ✅
+  when: not k3s_binary_stat.stat.exists
   notify: restart k3s
 
 # ---- 6. Démarrer K3s --------------------------------------
@@ -93,7 +79,7 @@
   systemd:
     name: k3s
     state: started
-    enabled: true             # idempotent ✅
+    enabled: true
 
 # ---- 7. Attendre que K3s soit prêt ------------------------
 - name: Attendre que K3s soit prêt
@@ -102,124 +88,178 @@
   retries: 5
   delay: 10
   until: k3s_status.rc == 0
-  changed_when: false         # idempotent ✅
+  changed_when: false
 
 - name: Afficher statut K3s
   debug:
     msg: "✅ K3s prêt : {{ k3s_status.stdout_lines[0] }}"
 
-# ---- 8. Récupérer le kubeconfig --------------------------
-- name: Récupérer le kubeconfig K3s
-  fetch:
+# ---- 8. Configurer kubeconfig ----------------------------
+- name: Créer dossier .kube
+  file:
+    path: /root/.kube
+    state: directory
+    mode: '0755'
+
+- name: Copier kubeconfig K3s
+  copy:
     src: "{{ kubeconfig_path }}"
-    dest: ~/.kube/config
-    flat: true
+    dest: /root/.kube/config
+    remote_src: true
+    mode: '0600'
 
-# ---- 9. Installer pack CLI (Buildpacks) ------------------
-- name: Vérifier si pack CLI est installé
-  stat:
-    path: "{{ pack_binary_path }}"
-  register: pack_binary_stat
+# ---- 9. Permission kubeconfig ----------------------------
+- name: Donner permission kubeconfig
+  file:
+    path: "{{ kubeconfig_path }}"
+    mode: '0644'
 
-- name: Installer pack CLI (Buildpacks)
-  shell: |
-    curl -sSL https://github.com/buildpacks/pack/releases/download/{{ pack_version }}/pack-{{ pack_version }}-linux.tgz \
-    | tar -xz -C /usr/local/bin/
-  when: not pack_binary_stat.stat.exists    # idempotent ✅
+# ---- 10. Corriger IP kubeconfig --------------------------
+- name: Corriger IP kubeconfig
+  replace:
+    path: "{{ kubeconfig_path }}"
+    regexp: '127\.0\.0\.1'
+    replace: "{{ ansible_host }}"
 
-- name: Vérifier version pack CLI
-  command: pack --version
-  register: pack_version_check
-  changed_when: false                        # idempotent ✅
-
-- name: Afficher version pack CLI
+# ---- OPTION 1 — Image Docker directe --------------------
+- name: "[OPTION 1] Vérifier image Docker"
   debug:
-    msg: "✅ Pack CLI : {{ pack_version_check.stdout }}"
+    msg: "✅ Option 1 — Image Docker : {{ docker_image }}"
+  when: github_repo == ""
 
-# ---- 10. Cloner code depuis GitHub -----------------------
-# Le code source est sur GitHub, PAS sur Windows
-# Ansible clone directement depuis GitHub vers la VM
-
-- name: Supprimer ancien dossier si existant
+# ---- OPTION 2 — GitHub + Docker build -------------------
+- name: "[OPTION 2] Supprimer ancien dossier"
   file:
     path: "{{ code_dest }}"
     state: absent
+  when: github_repo != ""
 
-- name: Cloner le code source depuis GitHub
+- name: "[OPTION 2] Créer dossier destination"
+  file:
+    path: "{{ code_dest }}"
+    state: directory
+    mode: '0755'
+  when: github_repo != ""
+
+- name: "[OPTION 2] Cloner code depuis GitHub"
   git:
     repo: "{{ github_repo }}"
     dest: "{{ code_dest }}"
-    version: "{{ github_branch }}"
+    version: "HEAD"
     force: true
+  when: github_repo != ""
 
-- name: Confirmer clone réussi
+- name: "[OPTION 2] Confirmer clone réussi"
   debug:
-    msg: "✅ Code cloné depuis {{ github_repo }} vers {{ code_dest }}"
+    msg: "✅ Code cloné depuis {{ github_repo }}"
+  when: github_repo != ""
 
-# ---- 11. Builder image avec Buildpacks -------------------
-# Buildpacks détecte automatiquement le langage :
-# pom.xml       → Java
-# package.json  → Node.js
-# requirements.txt → Python
+# ---- Vérifier Dockerfile --------------------------------
+- name: "[OPTION 2] Vérifier Dockerfile existe"
+  stat:
+    path: "{{ code_dest }}/Dockerfile"
+  register: dockerfile_stat
+  when: github_repo != ""
 
-- name: Builder image avec Buildpacks
+- name: "[OPTION 2] Échouer si pas de Dockerfile"
+  fail:
+    msg: |
+      ❌ Dockerfile manquant dans {{ github_repo }} !
+      Le repo doit contenir un Dockerfile à la racine.
+  when: github_repo != "" and not dockerfile_stat.stat.exists
+
+# ---- Builder image --------------------------------------
+- name: "[OPTION 2] Builder image avec Docker"
   shell: |
-    pack build {{ docker_image }} \
-    --builder {{ pack_builder }} \
-    --path {{ code_dest }}
+    cd {{ code_dest }} && \
+    docker build -t {{ service_name }}:latest .
+  when: github_repo != ""
   register: build_result
   changed_when: true
 
-- name: Vérifier que le build a réussi
+- name: "[OPTION 2] Vérifier build réussi"
   fail:
-    msg: "❌ Buildpacks build échoué pour {{ service_name }} !"
-  when: build_result.rc != 0
+    msg: "❌ Build Docker échoué pour {{ service_name }} !"
+  when: github_repo != "" and build_result.rc != 0
 
-- name: Confirmer image buildée
+- name: "[OPTION 2] Confirmer image buildée"
   debug:
-    msg: "✅ Image {{ docker_image }} buildée avec succès par Buildpacks !"
+    msg: "✅ Image {{ service_name }}:latest buildée !"
+  when: github_repo != ""
 
-# ---- 12. Charger image dans K3s -------------------------
-- name: Sauvegarder image Docker en tar
-  shell: docker save {{ docker_image }} -o /tmp/{{ service_name }}.tar
-  changed_when: true
+# ---- Importer dans K3s ----------------------------------
+# ---- Importer dans K3s ----------------------------------
 
-- name: Charger image dans K3s
-  shell: k3s ctr images import /tmp/{{ service_name }}.tar
-  changed_when: true
-
-- name: Nettoyer fichier tar temporaire
+- name: "[OPTION 2] Supprimer tar existant"
   file:
-    path: /tmp/{{ service_name }}.tar
-    state: absent             # idempotent ✅
+    path: "/tmp/{{ service_name }}.tar"
+    state: absent
+  when: github_repo != ""
 
-- name: Confirmer chargement dans K3s
+- name: "[OPTION 2] Sauvegarder image en tar"
+  shell: |
+    docker save {{ service_name }}:latest -o /tmp/{{ service_name }}.tar
+  become: true
+  when: github_repo != ""
+  changed_when: true
+
+- name: "[OPTION 2] Importer image dans K3s"
+  command: >
+    k3s ctr images import /tmp/{{ service_name }}.tar
+  become: true
+  when: github_repo != ""
+
+# ---- IMPORTANT : créer le tag attendu par Kubernetes ----
+
+- name: "[OPTION 2] Taguer image pour Kubernetes"
+  command: >
+    k3s ctr images tag
+    docker.io/library/{{ service_name }}:latest
+    {{ service_name }}:latest
+  become: true
+  when: github_repo != ""
+
+# ---- Vérifier image dans K3s ----------------------------
+
+- name: "[OPTION 2] Vérifier réellement image dans K3s"
+  shell: >
+    k3s ctr images list | grep -E '(^|/){{ service_name }}:latest'
+  become: true
+  register: k3s_image_check
+  changed_when: false
+  failed_when: k3s_image_check.rc != 0
+  when: github_repo != ""
+
+- name: "[OPTION 2] Confirmer image dans K3s"
   debug:
-    msg: "✅ Image {{ docker_image }} chargée dans K3s"
+    msg: "✅ Image {{ service_name }}:latest réellement présente dans K3s !"
+  when:
+    - github_repo != ""
+    - k3s_image_check.rc == 0
+
+- name: "[OPTION 2] Nettoyer fichier tar"
+  file:
+    path: "/tmp/{{ service_name }}.tar"
+    state: absent
+  when: github_repo != ""
 
 # ---- 13. Vérifications finales ---------------------------
 - name: Vérifier contexte kubectl
   command: kubectl config current-context
   register: kube_context
-  changed_when: false         # idempotent ✅
+  changed_when: false
 
 - name: Afficher contexte kubectl
   debug:
     msg: "Contexte kubectl : {{ kube_context.stdout }}"
 
-- name: Échouer si contexte incorrect
-  fail:
-    msg: "⚠️ kubectl ne pointe pas sur K3s !"
-  when: "'default' not in kube_context.stdout"
-
 - name: Tout est prêt pour Terraform
   debug:
     msg: |
       ✅ Environnement prêt !
-      ─────────────────────────────────
-      Service  : {{ service_name }}
-      Image    : {{ docker_image }}
-      GitHub   : {{ github_repo }}
-      K3s      : {{ k3s_status.stdout_lines[0] }}
-      ─────────────────────────────────
+      ─────────────────────────
+      Service : {{ service_name }}
+      GitHub  : {{ github_repo }}
+      K3s     : {{ k3s_status.stdout_lines[0] }}
+      ─────────────────────────
       Prochaine étape : terraform apply

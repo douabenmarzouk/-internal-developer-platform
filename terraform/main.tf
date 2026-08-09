@@ -3,7 +3,6 @@
 # Projet     : Internal Developer Platform (IDP)
 # Auteur     : Doaa Ben Marzouk
 # École      : ENICarthage
-# Description: Ressources Kubernetes du microservice
 # ============================================================
 
 # ---- Namespace --------------------------------------------
@@ -19,7 +18,7 @@ resource "kubernetes_namespace_v1" "app" {
 }
 
 # ---- ConfigMap --------------------------------------------
-resource "kubernetes_config_map" "app_config" {
+resource "kubernetes_config_map_v1" "app_config" {
   metadata {
     name      = "${var.service_name}-config"
     namespace = kubernetes_namespace_v1.app.metadata[0].name
@@ -36,7 +35,7 @@ resource "kubernetes_config_map" "app_config" {
 }
 
 # ---- ServiceAccount ---------------------------------------
-resource "kubernetes_service_account" "app_sa" {
+resource "kubernetes_service_account_v1" "app_sa" {
   metadata {
     name      = "${var.service_name}-sa"
     namespace = kubernetes_namespace_v1.app.metadata[0].name
@@ -76,11 +75,14 @@ resource "kubernetes_deployment" "app" {
       }
 
       spec {
-        service_account_name = kubernetes_service_account.app_sa.metadata[0].name
+        service_account_name = kubernetes_service_account_v1.app_sa.metadata[0].name
 
         container {
           name  = var.service_name
           image = var.docker_image
+
+          # ✅ Utiliser image locale K3s !
+          image_pull_policy = "Never"
 
           port {
             container_port = var.port
@@ -97,7 +99,6 @@ resource "kubernetes_deployment" "app" {
             }
           }
 
-          # Variables d'environnement dynamiques
           dynamic "env" {
             for_each = var.env_vars
             content {
@@ -106,10 +107,9 @@ resource "kubernetes_deployment" "app" {
             }
           }
 
-          # Variables depuis ConfigMap
           env_from {
             config_map_ref {
-              name = kubernetes_config_map.app_config.metadata[0].name
+              name = kubernetes_config_map_v1.app_config.metadata[0].name
             }
           }
         }
@@ -119,13 +119,13 @@ resource "kubernetes_deployment" "app" {
 
   depends_on = [
     kubernetes_namespace_v1.app,
-    kubernetes_config_map.app_config,
-    kubernetes_service_account.app_sa
+    kubernetes_config_map_v1.app_config,
+    kubernetes_service_account_v1.app_sa
   ]
 }
 
 # ---- Service ----------------------------------------------
-resource "kubernetes_service" "app" {
+resource "kubernetes_service_v1" "app" {
   metadata {
     name      = var.service_name
     namespace = kubernetes_namespace_v1.app.metadata[0].name
@@ -133,7 +133,6 @@ resource "kubernetes_service" "app" {
   }
 
   spec {
-    # ✅ Corrigé : network_exposure
     type = var.network_exposure == "internal" ? "ClusterIP" : "NodePort"
 
     selector = {
@@ -144,7 +143,6 @@ resource "kubernetes_service" "app" {
       name        = "http"
       port        = var.port
       target_port = var.port
-      # ✅ node_port utilisé si défini
       node_port   = var.network_exposure == "internal" ? null : var.node_port
     }
   }
@@ -174,7 +172,7 @@ resource "kubernetes_ingress_v1" "app_ingress" {
           path      = "/${var.service_name}"
           backend {
             service {
-              name = kubernetes_service.app.metadata[0].name
+              name = kubernetes_service_v1.app.metadata[0].name
               port {
                 number = var.port
               }
@@ -185,11 +183,11 @@ resource "kubernetes_ingress_v1" "app_ingress" {
     }
   }
 
-  depends_on = [kubernetes_service.app]
+  depends_on = [kubernetes_service_v1.app]
 }
 
 # ---- PVC (optionnel) --------------------------------------
-resource "kubernetes_persistent_volume_claim" "app_pvc" {
+resource "kubernetes_persistent_volume_claim_v1" "app_pvc" {
   count = var.create_pvc ? 1 : 0
 
   metadata {

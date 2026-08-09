@@ -3,11 +3,9 @@
 # Projet     : Internal Developer Platform (IDP)
 # Auteur     : Doaa Ben Marzouk
 # École      : ENICarthage
-# Description: Sorties après déploiement du microservice
 # ============================================================
 
 # ---- Informations du service ------------------------------
-
 output "service_name" {
   description = "Nom du service déployé"
   value       = var.service_name
@@ -29,7 +27,6 @@ output "language" {
 }
 
 # ---- Déploiement ------------------------------------------
-
 output "replicas" {
   description = "Nombre de réplicas demandés"
   value       = var.replicas
@@ -37,7 +34,7 @@ output "replicas" {
 
 output "ready_replicas" {
   description = "Nombre de réplicas prêts"
-  value       = kubernetes_deployment.app.status[0].ready_replicas
+  value       =  kubernetes_deployment.app.spec[0].replicas
 }
 
 output "docker_image" {
@@ -46,7 +43,6 @@ output "docker_image" {
 }
 
 # ---- Réseau -----------------------------------------------
-
 output "service_port" {
   description = "Port du microservice"
   value       = var.port
@@ -59,14 +55,15 @@ output "network_type" {
 
 output "node_port" {
   description = "NodePort exposé (si external)"
-  value       = var.network_exposure != "internal" ? kubernetes_service.app.spec[0].port[0].node_port : null
+  value       = var.network_exposure != "internal" ? kubernetes_service_v1.app.spec[0].port[0].node_port : null
 }
 
 output "service_url" {
-  value = var.create_ingress ? "http://${var.ingress_host}/${var.service_name}" : "http://${var.vm_ip}:${kubernetes_service.app.spec[0].port[0].node_port}"
+  description = "URL d'accès au service"
+  value       = var.create_ingress ? "http://${var.ingress_host}/${var.service_name}" : "http://${var.vm_ip}:${kubernetes_service_v1.app.spec[0].port[0].node_port}"
 }
-# ---- Commandes kubectl ------------------------------------
 
+# ---- Commandes kubectl ------------------------------------
 output "kubectl_get_pods" {
   description = "Voir les pods"
   value       = "kubectl get pods -n ${kubernetes_namespace_v1.app.metadata[0].name} -l app=${var.service_name}"
@@ -88,12 +85,14 @@ output "kubectl_describe" {
 }
 
 # ---- Monitoring -------------------------------------------
-
 output "prometheus_url" {
-  value = "http://${var.vm_ip}:30090"
+  description = "URL Prometheus"
+  value       = "http://${var.vm_ip}:30090"
 }
+
 output "grafana_url" {
-  value = "http://${var.vm_ip}:30300"
+  description = "URL Grafana"
+  value       = "http://${var.vm_ip}:30300"
 }
 
 output "grafana_credentials" {

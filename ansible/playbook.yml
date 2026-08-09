@@ -16,10 +16,7 @@
   hosts: k3s-vm
   become: true
 
-  vars:
-    service_name: "{{ service_name | default('demo-service') }}"
-    github_repo: "{{ github_repo | default('https://github.com/douabenmarzouk/demo-service') }}"
-    github_branch: "{{ github_branch | default('main') }}"
+
 
   roles:
     - prepare_env

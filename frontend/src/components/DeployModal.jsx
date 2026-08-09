@@ -12,6 +12,7 @@ const INITIAL_FORM = {
   replicas: 1,
   environment: 'dev',
   networkExposure: 'external',
+  githubRepo: '',
 }
 
 const DeployModal = ({ open, onClose, onDeployed }) => {
@@ -99,6 +100,18 @@ const DeployModal = ({ open, onClose, onDeployed }) => {
               <option value="external">external (NodePort)</option>
               <option value="internal">internal (ClusterIP)</option>
             </select>
+          </div>
+          {/* GitHub Repo — pleine largeur */}
+          <div className="form-group" style={{ marginBottom: '16px' }}>
+            <label className="form-label">GitHub Repository</label>
+            <input
+               className="form-input"
+               name="githubRepo"
+               value={form.githubRepo}
+               onChange={handleChange}
+               placeholder="https://github.com/user/repo"
+               style={{ width: '100%' }}
+            />
           </div>
         </div>
 

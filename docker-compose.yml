@@ -1,14 +1,15 @@
+
+
 version: "3.9"
-
 services:
-
+  # ---- PostgreSQL ----------------------------------------
   postgres:
     image: postgres:16-alpine
     container_name: idp-db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-idp_db}
+      POSTGRES_USER: ${POSTGRES_USER:-idp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-idp_pass}
     ports:
       - "5433:5432"
     volumes:
@@ -16,11 +17,12 @@ services:
     networks:
       - idp-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-idp_user}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # ---- Frontend React + Nginx ----------------------------
   frontend:
     build:
       context: ./frontend
@@ -31,11 +33,52 @@ services:
     networks:
       - idp-network
     extra_hosts:
-      - "host.docker.internal:host-gateway" # ✅ accès Windows
+      - "host.docker.internal:host-gateway"
 
+  # ---- Prometheus ----------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: idp-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    networks:
+      - idp-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ---- Grafana -------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: idp-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    networks:
+      - idp-network
+    depends_on:
+      - prometheus
+
+# ---- Volumes ---------------------------------------------
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:
 
+# ---- Réseaux ---------------------------------------------
 networks:
   idp-network:
     driver: bridge

@@ -1,9 +1,4 @@
-# ============================================================
-# alert_rules.yml
-# Projet      : Internal Developer Platform (IDP)
-# Auteur      : Doaa Ben Marzouk
-# Description : Règles d'alertes Prometheus
-# ============================================================
+
 
 groups:
   - name: idp-alerts

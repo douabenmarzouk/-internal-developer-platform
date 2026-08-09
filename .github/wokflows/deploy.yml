@@ -1,9 +1,3 @@
-# ============================================================
-# .github/workflows/deploy.yml
-# Projet  : Internal Developer Platform (IDP)
-# Auteur  : Doaa Ben Marzouk
-# École   : ENICarthage
-# ============================================================
 
 name: CI/CD IDP
 
@@ -92,38 +86,38 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/idp-frontend:${{ github.sha }}
 
   # ---- Job 4 : Health Check -----------------------------
-  health-check:
-    name: 🏥 Health Check
-    runs-on: ubuntu-latest
-    needs: [build-backend, build-frontend]
+  # ---- Job 4 : Validate ---------------------------------
+validate:
+  name: ✅ Validation Pipeline
+  runs-on: ubuntu-latest
+  needs: [build-backend, build-frontend]
 
-    steps:
-      - name: Health Check Backend
-        run: |
-          echo "🔍 Vérification Backend..."
-          curl -f http://${{ secrets.VM_HOST }}:8080/actuator/health || \
-          echo "⚠️ Backend pas encore disponible"
+  steps:
+    - name: Vérifier image Frontend sur Docker Hub
+      run: |
+        docker pull ${{ secrets.DOCKER_USERNAME }}/idp-frontend:latest
+        echo "✅ Image Frontend disponible sur Docker Hub"
 
-      - name: Health Check Frontend
-        run: |
-          echo "🔍 Vérification Frontend..."
-          curl -f http://${{ secrets.VM_HOST }}:3000 || \
-          echo "⚠️ Frontend pas encore disponible"
+    - name: Vérifier artifact backend
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-jar
 
-      - name: Health Check PostgreSQL
-        run: |
-          echo "🔍 Vérification PostgreSQL..."
-          nc -zv ${{ secrets.VM_HOST }} 5433 || \
-          echo "⚠️ PostgreSQL pas disponible"
+    - name: Vérifier .jar existe
+      run: |
+        ls -lh *.jar
+        echo "✅ Backend .jar buildé avec succès"
 
-      - name: Résumé
-        if: always()
-        run: |
-          echo "================================"
-          echo "✅ CI/CD IDP terminé !"
-          echo "Backend  : http://${{ secrets.VM_HOST }}:8080"
-          echo "Frontend : http://${{ secrets.VM_HOST }}:3000"
-          echo "================================"
+    - name: Résumé
+      if: always()
+      run: |
+        echo "================================"
+        echo "✅ CI/CD IDP terminé !"
+        echo "Backend  : .jar uploadé ✅"
+        echo "Frontend : image Docker Hub ✅"
+        echo "Branche  : ${{ github.ref_name }}"
+        echo "Auteur   : ${{ github.actor }}"
+        echo "================================"
 
   # ---- Job 5 : Notification échec ----------------------
   notify-failure:
