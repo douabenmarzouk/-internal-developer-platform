@@ -47,7 +47,6 @@ Inspiré des plateformes internes utilisées par Netflix, Spotify et Airbnb.
 ---
 
 ## ☁️ Architecture Cloud Privé
-
 Windows (Machine développeur)
 ├── React (Frontend) → http://localhost:3000
 ├── Spring Boot (Backend) → http://localhost:8085
