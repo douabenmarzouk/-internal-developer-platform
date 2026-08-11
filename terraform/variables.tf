@@ -19,7 +19,7 @@ variable "service_name" {
 variable "vm_ip" {
   description = "IP de la VM VMware (K3s)"
   type        = string
-  default     = "192.168.178.129"  # ← mettre ton IP VM
+  default     = "192.168.174.129"  # ← mettre ton IP VM
 }
 
 variable "docker_image" {
