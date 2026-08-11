@@ -1,7 +1,4 @@
-// ============================================================
-// BottomPanels.jsx — Logs pipeline + Activité réelle
-// Données réelles depuis le backend — plus de mocks !
-// ============================================================
+
 
 const LOG_BADGE = {
   ok: 'log-ok',

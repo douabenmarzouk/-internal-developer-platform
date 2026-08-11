@@ -1,10 +1,4 @@
-# ============================================================
-# dashboards.yml
-# Projet      : Internal Developer Platform (IDP)
-# Auteur      : Doaa Ben Marzouk
-# Description : Configure le chargement automatique
-#               des dashboards Grafana
-# ============================================================
+
 
 apiVersion: 1
 

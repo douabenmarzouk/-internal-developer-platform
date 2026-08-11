@@ -1,9 +1,4 @@
-# ============================================================
-# main.tf
-# Projet     : Internal Developer Platform (IDP)
-# Auteur     : Doaa Ben Marzouk
-# École      : ENICarthage
-# ============================================================
+
 
 # ---- Namespace --------------------------------------------
 resource "kubernetes_namespace_v1" "app" {

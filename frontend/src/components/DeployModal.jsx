@@ -1,6 +1,4 @@
-// ============================================================
-// DeployModal.jsx — Modal de déploiement d'un microservice
-// ============================================================
+
 
 import { useState } from 'react'
 import { deployService } from '../services/api'
@@ -50,7 +48,7 @@ const DeployModal = ({ open, onClose, onDeployed }) => {
     >
       <div className="modal">
         <div className="modal-title">Deploy a microservice</div>
-        <div className="modal-sub">Ansible → Terraform → K3s · Average deploy time: 2m 24s</div>
+        
 
         {error && (
           <div style={{ background: 'rgba(229,9,20,0.15)', color: 'var(--danger)', padding: '10px 14px', borderRadius: '4px', fontSize: '12px', marginBottom: '16px' }}>

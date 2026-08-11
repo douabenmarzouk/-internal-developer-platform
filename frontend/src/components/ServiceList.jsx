@@ -1,6 +1,4 @@
-// ============================================================
-// ServiceList.jsx — Liste des microservices déployés
-// ============================================================
+
 
 import { deleteDeployment } from '../services/api'
 

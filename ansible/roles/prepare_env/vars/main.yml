@@ -1,8 +1,4 @@
-# ============================================================
-# vars/main.yml
-# Projet      : Internal Developer Platform (IDP)
-# Auteur      : Doaa Ben Marzouk
-# ============================================================
+
 
 # ---- Image Docker -----------------------------------------
 docker_image: ""
@@ -18,10 +14,10 @@ github_branch: ""
 code_dest: "/tmp/{{ service_name }}"
 
 # ---- Buildpacks -------------------------------------------
-pack_version: "v0.40.7"                              # ✅ version installée
-pack_builder: "paketobuildpacks/builder-jammy-tiny"  # ✅ tiny pas base
+pack_version: "v0.40.7"                             
+pack_builder: "paketobuildpacks/builder-jammy-tiny"  
 pack_binary_path: "/usr/local/bin/pack"
-docker_hub_username: "doua82400"                # ✅ ajouter
+docker_hub_username: "doua82400"               
 
 # ---- K3s --------------------------------------------------
 k3s_binary: "/usr/local/bin/k3s"

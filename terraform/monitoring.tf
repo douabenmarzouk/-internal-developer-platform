@@ -1,10 +1,4 @@
-# ============================================================
-# monitoring.tf
-# Projet     : Internal Developer Platform (IDP)
-# Auteur     : Doaa Ben Marzouk
-# École      : ENICarthage
-# Description: Installation Prometheus + Grafana via Helm
-# ============================================================
+
 
 # ---- Namespace Monitoring ---------------------------------
 resource "kubernetes_namespace_v1" "monitoring" {

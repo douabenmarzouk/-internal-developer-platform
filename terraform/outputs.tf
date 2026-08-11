@@ -1,11 +1,4 @@
-# ============================================================
-# outputs.tf
-# Projet     : Internal Developer Platform (IDP)
-# Auteur     : Doaa Ben Marzouk
-# École      : ENICarthage
-# ============================================================
 
-# ---- Informations du service ------------------------------
 output "service_name" {
   description = "Nom du service déployé"
   value       = var.service_name

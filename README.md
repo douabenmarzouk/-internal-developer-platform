@@ -1,6 +1,6 @@
 📝 README complet
 markdown
-# 🚀 Internal Developer Platform (IDP)
+#  Internal Developer Platform (IDP)
 
 > Plateforme web permettant de déployer automatiquement toute application
 > conteneurisée (microservices, APIs, frontends) sur un cloud privé en un
@@ -18,7 +18,7 @@ markdown
 
 ---
 
-## 📌 Description
+##  Description
 
 L'IDP (Internal Developer Platform) est une plateforme qui permet à un
 développeur de déployer automatiquement toute application conteneurisée

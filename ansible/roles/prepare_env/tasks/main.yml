@@ -1,10 +1,4 @@
 
-# ============================================================
-# tasks/main.yml
-# Projet      : Internal Developer Platform (IDP)
-# Auteur      : Doaa Ben Marzouk
-# École       : ENICarthage
-# ============================================================
 
 # ---- 1. Mettre à jour les paquets -------------------------
 - name: Mettre à jour tous les paquets

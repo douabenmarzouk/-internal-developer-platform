@@ -1,6 +1,3 @@
-// ============================================================
-// App.jsx — Page principale du dashboard IDP
-// ============================================================
 
 import { useState, useEffect } from 'react'
 import Topbar from './components/Topbar'

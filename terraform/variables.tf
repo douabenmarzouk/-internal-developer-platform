@@ -1,12 +1,4 @@
-# ============================================================
-# variables.tf
-# Projet     : Internal Developer Platform (IDP)
-# Auteur     : Doaa Ben Marzouk
-# École      : ENICarthage
-# Description: Variables du déploiement microservice
-# ============================================================
 
-# ---- Identification ---------------------------------------
 
 variable "service_name" {
   description = "Nom du microservice à déployer"
@@ -19,7 +11,7 @@ variable "service_name" {
 variable "vm_ip" {
   description = "IP de la VM VMware (K3s)"
   type        = string
-  default     = "192.168.174.129"  # ← mettre ton IP VM
+  default     = "192.168.174.129" 
 }
 
 variable "docker_image" {
